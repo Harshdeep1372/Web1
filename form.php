@@ -1,43 +1,79 @@
 <?php
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'sendMail/vendor/autoload.php';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Collect and sanitize form data
-    $first_name = htmlspecialchars(trim($_POST["first_name"]));
-    $last_name = htmlspecialchars(trim($_POST["last_name"]));
-    $email = htmlspecialchars(trim($_POST["email"]));
-    $subject = htmlspecialchars(trim($_POST["subject"]));
-    $message = htmlspecialchars(trim($_POST["message"]));
+    $first_name = htmlspecialchars($_POST['first_name']);
+    $last_name = htmlspecialchars($_POST['last_name']);
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $subject = htmlspecialchars($_POST['subject']);
+    $message = htmlspecialchars($_POST['message']);
+    
+    $full_name = $first_name . ' ' . $last_name;
 
-    // Basic validation (additional validation can be added)
-    if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($message)) {
-        // Set the recipient email address
-        $to = "hardee772783@gmail.com"; // Replace with the recipient's email address
+    // Validate email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo '<script type="text/javascript">';
+        echo 'alert("Invalid email address. Please enter a valid email address.");';
+        echo 'window.history.back();';
+        echo '</script>';
+        exit();
+    }
 
-        // Set the email subject
-        $email_subject = "New Contact Form Submission from " . $first_name . " " . $last_name;
+    // Initialize PHPMailer
+    $mail = new PHPMailer(true);
 
-        // Create the email content
-        $body = "You have received a new message from your website contact form.\n\n";
-        $body .= "Here are the details:\n";
-        $body .= "First Name: " . $first_name . "\n";
-        $body .= "Last Name: " . $last_name . "\n";
-        $body .= "Email: " . $email . "\n";
-        $body .= "Subject: " . $subject . "\n";
-        $body .= "Message: \n" . $message . "\n";
+    try {
+        // Enable SMTP debugging
+        $mail->SMTPDebug = 2; // Set to 0 for no debugging, 1 for client messages, and 2 for client and server messages
 
-        // Set additional headers
-        $headers = "From: $email\r\n";
-        $headers .= "Reply-To: $email\r\n";
+        // Email configuration settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'princeharshdeep66@gmail.com'; // Use new email address
+        $mail->Password = 'ohtzbjiqeuaowfsf'; // Use new email password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        // Sender and recipient email addresses
+        $mail->setFrom('princeharshdeep66@gmail.com', 'Harsh deep');
+        $mail->addAddress('princeharshdeep66@gmail.com', 'Harsh deep');
+
+        // Attach the image
+         $mail->addEmbeddedImage('C:\project\Web1-main\Web1-main\images\header\logo.png', 'logo_img');
+
+        // Email content
+        $mail->isHTML(true);
+        $mail->Subject = 'Email from ' . $full_name;
+        
+        $bodyContent = "<div style='text-align: center;'>";
+        $bodyContent .= "<img src='cid:logo_img' alt='Logo' style='width: 200px; height: auto;'><br>";
+        $bodyContent .= "</div>";
+        $bodyContent .= "<div style='text-align: left;'>";
+        $bodyContent .= "<h1>test</h1>";
+        $bodyContent .= "<h2>Inquiry from contact form</h2>";
+        $bodyContent .= '<h3>' . $full_name . ' Is Trying To Connect With You For ' . $subject . ' </h3>';
+        $bodyContent .= '<p>Name: ' . $full_name . '</p>';
+        $bodyContent .= '<p>Email: ' . $email . '</p>';
+        $bodyContent .= '<p>Subject: ' . $subject . '</p>';
+        $bodyContent .= '<p>Message: ' . $message . '</p>';
+        $bodyContent .= "</div>";
+
+        $mail->Body = $bodyContent;
 
         // Send the email
-        if (mail($to, $email_subject, $body, $headers)) {
-            echo 1; // Success response
-        } else {
-            echo 0; // Error response
-        }
-    } else {
-        echo 0; // Error response for missing fields
+        $mail->send();
+        echo '<script type="text/javascript">';
+        echo 'alert("Thank you for the message. We will contact you shortly.");';
+        echo 'window.location.href = "index.html";'; // Change "index.html" to the path of your home page
+        echo '</script>';
+        exit();
+    } catch (Exception $e) {
+        echo 'Message was not sent. Mailer error: ' . $mail->ErrorInfo;
     }
-} else {
-    echo 0; // Invalid request method
 }
 ?>
